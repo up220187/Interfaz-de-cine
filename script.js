@@ -5,8 +5,6 @@
     const pass = document.getElementById("contrasena").value;
     if (user && pass) {
         nombreUsuario = user;
-        document.body.classList.remove('login-bg');
-
         document.getElementById("login").style.display = "none";
         document.getElementById("salas").style.display = "block";
         document.getElementById("logout").style.display = "block";
@@ -17,7 +15,6 @@
 
 function cerrarSesion() {
     nombreUsuario = "";
-    document.body.classList.add('login-bg');
     document.getElementById("login").style.display = "block";
     document.getElementById("salas").style.display = "none";
     document.getElementById("logout").style.display = "none";
@@ -70,7 +67,7 @@ function cerrarSesion() {
         cont.appendChild(document.createElement("br"));
     }
     }
-
+    
     function comprar() {
     const reservados = document.querySelectorAll(".asiento.reservado");
     let total = reservados.length * 75;
@@ -84,3 +81,6 @@ function cerrarSesion() {
     document.getElementById("totalPago").textContent = "Total: $" + total;
     document.getElementById("ticket").style.display = "block";
     }
+
+
+    
