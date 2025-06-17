@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<peliculas>
+    <pelicula id="1" categoria="Acción">
+        <titulo>Rápidos y furiosos 9</titulo>
+    </pelicula>
+    <pelicula id="2" categoria="Comedia">
+        <titulo>Un jefe en pañales</titulo>
+    </pelicula>
+    <pelicula id="3" categoria="Terror">
+        <titulo>El conjuro 3</titulo>
+    </pelicula>
+</peliculas>

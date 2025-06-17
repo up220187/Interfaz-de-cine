@@ -1,0 +1,19 @@
+.asiento {
+    width: 30px;
+    height: 30px;
+    margin: 5px;
+    display: inline-block;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.disponible {
+    background-color: #4caf50;
+}
+.ocupado {
+    background-color: #f44336;
+    cursor: not-allowed;
+}
+.reservado {
+    background-color: #ffc107;
+    cursor: not-allowed;
+}
