@@ -5,23 +5,27 @@
     const pass = document.getElementById("contrasena").value;
     if (user && pass) {
         nombreUsuario = user;
+        document.body.classList.remove('login-bg');
+
         document.getElementById("login").style.display = "none";
         document.getElementById("salas").style.display = "block";
         document.getElementById("logout").style.display = "block";
     } else {
         alert("Ingrese usuario y contraseña");
     }
-    }
+}
 
-    function cerrarSesion() {
-    nombreUsuario = "";
+function cerrarSesion() {
+    nombreUsuario = "";n
+    document.body.classList.add('login-bg');
     document.getElementById("login").style.display = "block";
     document.getElementById("salas").style.display = "none";
     document.getElementById("logout").style.display = "none";
     document.getElementById("ticket").style.display = "none";
     document.getElementById("usuario").value = "";
     document.getElementById("contrasena").value = "";
-    }
+}
+
 
     function cargarPeliculas() {
     fetch("peliculas.xml")

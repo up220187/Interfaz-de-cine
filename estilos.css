@@ -29,21 +29,80 @@
 }
 
 /* paleta de colores 
-#4d82bc
-
-#84b6f4
-
-#c4dafa
-
-#f3c2ea
-
-#f5d7ef 
-
 #052852
  #3c326b
 #793d87
 #c9479f
  #ff58ac
 
-
 */
+
+body.login-bg {
+    font-family: 'Segoe UI', sans-serif;
+    background: url('img/cute.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #052852;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+body.login-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 237, 245, 0.85);
+    z-index: 0;
+}
+
+body.login-bg #login {
+    position: relative;
+    z-index: 1;
+    background-color: #ffffff;
+    padding: 40px 45px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 420px;
+    border-left: 8px solid #c9479f;
+}
+
+body.login-bg #login input,
+body.login-bg #login button {
+    display: block;
+    width: 100%;
+    margin: 12px 0; 
+    padding: 12px 15px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1.5px solid #c9479f;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+/* Cambiar borde al enfocar */
+body.login-bg #login input:focus {
+    border-color: #793d87;
+    outline: none;
+}
+
+/* Botón con color y efecto */
+body.login-bg #login button {
+    background-color: #c9479f;
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+body.login-bg #login button:hover {
+    background-color: #793d87;
+}
+
+/* Opcional: centrado texto placeholder */
+body.login-bg #login input::placeholder {
+    color: #a87cae;
+    font-weight: 500;
+}
