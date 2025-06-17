@@ -186,3 +186,57 @@ body #login input::placeholder {
     color: #a87cae;
     font-weight: 500;
 }
+
+/* estilos para el ticket */
+#ticket {
+  max-width: 350px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #f6dce7;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  font-family: 'Arial', sans-serif;
+  color: #333;
+  position: relative;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  clip-path: 
+    polygon(
+      20px 0%, 
+      calc(100% - 20px) 0%, 
+      100% 20px, 
+      100% calc(100% - 20px), 
+      calc(100% - 20px) 100%, 
+      20px 100%, 
+      0% calc(100% - 20px), 
+      0% 20px
+    );
+}
+
+#ticket h3 {
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c9479f;
+  margin-bottom: 15px;
+  border-bottom: 2px dashed #ff58ac;
+  padding-bottom: 8px;
+}
+
+#detallesBoleto {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  white-space: pre-line; /* para respetar saltos de línea */
+}
+
+#totalPago {
+  font-weight: 700;
+  font-size: 18px;
+  text-align: right;
+  color: #c9479f;
+  border-top: 2px dashed #ff58ac;
+  padding-top: 10px;
+}
+
+
