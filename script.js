@@ -1,6 +1,6 @@
     let nombreUsuario = "";
 
-    function iniciarSesion() {
+   function iniciarSesion() {
     const user = document.getElementById("usuario").value;
     const pass = document.getElementById("contrasena").value;
     if (user && pass) {
@@ -16,7 +16,7 @@
 }
 
 function cerrarSesion() {
-    nombreUsuario = "";n
+    nombreUsuario = "";
     document.body.classList.add('login-bg');
     document.getElementById("login").style.display = "block";
     document.getElementById("salas").style.display = "none";
@@ -25,7 +25,6 @@ function cerrarSesion() {
     document.getElementById("usuario").value = "";
     document.getElementById("contrasena").value = "";
 }
-
 
     function cargarPeliculas() {
     fetch("peliculas.xml")
