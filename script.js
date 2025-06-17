@@ -23,25 +23,58 @@ function cerrarSesion() {
     document.getElementById("contrasena").value = "";
 }
 
-    function cargarPeliculas() {
+
+function cargarPeliculas() {
     fetch("peliculas.xml")
         .then(res => res.text())
         .then(str => {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(str, "application/xml");
-        const pelis = xml.getElementsByTagName("pelicula");
-        const container = document.getElementById("peliculasContainer");
-        container.innerHTML = "";
-        const select = document.createElement("select");
-        for (let p of pelis) {
-            const option = document.createElement("option");
-            option.value = p.getAttribute("id");
-            option.textContent = p.getElementsByTagName("titulo")[0].textContent + " - " + p.getAttribute("categoria");
-            select.appendChild(option);
-        }
-        container.appendChild(select);
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(str, "application/xml");
+            const pelis = xml.getElementsByTagName("pelicula");
+            peliculasData = [];
+            for (let p of pelis) {
+                peliculasData.push({
+                    id: p.getAttribute("id"),
+                    categoria: p.getAttribute("categoria"),
+                    sala: p.getAttribute("sala"),
+                    titulo: p.getElementsByTagName("titulo")[0].textContent
+                });
+            }
+            mostrarPeliculaSegunSala(); // mostrar la pelicula inicial (sala 1)
         });
+}
+
+    function mostrarPeliculaSegunSala() {
+        const salaSeleccionada = document.getElementById("salaSelecion").value;
+        const cont = document.getElementById("peliculasContainer");
+        cont.innerHTML = "";
+
+        const pelicula = peliculasData.find(p => p.sala === salaSeleccionada);
+        if (pelicula) {
+            cont.textContent = `Película: ${pelicula.titulo} (${pelicula.categoria})`;
+        } else {
+            cont.textContent = "No hay película asignada a esta sala.";
+        }
     }
+
+function mostrarPeliculaSegunSala() {
+    const salaSeleccionada = document.getElementById("salaSelecion").value;
+    const cont = document.getElementById("peliculasContainer");
+    cont.innerHTML = "";
+
+    const pelicula = peliculasData.find(p => p.sala === salaSeleccionada);
+    if (pelicula) {
+        cont.textContent = `Película: ${pelicula.titulo} (${pelicula.categoria})`;
+    } else {
+        cont.textContent = "No hay película asignada a esta sala.";
+    }
+}
+
+document.getElementById("salaSelecion").addEventListener("change", () => {
+    mostrarPeliculaSegunSala();
+    generarAsientos();
+});
+
 
     function generarAsientos() {
     const cont = document.getElementById("asientosContainer");
