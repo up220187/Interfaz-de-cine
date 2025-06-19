@@ -79,7 +79,7 @@ document.getElementById("salaSelecion").addEventListener("change", () => {
     function generarAsientos() {
     const cont = document.getElementById("asientosContainer");
     cont.innerHTML = "";
-    const filas = ["A", "B", "C", "D"];
+    const filas = ["A", "B", "C", "D","E"];
     let contador = 0;
     for (let fila of filas) {
         for (let i = 1; i <= 5; i++) {
@@ -114,6 +114,52 @@ document.getElementById("salaSelecion").addEventListener("change", () => {
     document.getElementById("totalPago").textContent = "Total: $" + total;
     document.getElementById("ticket").style.display = "block";
     }
+
+    function CrearEmpleado() {
+        const nombre = document.getElementById("nombreEmpleado").value;
+        const email = document.getElementById("emailEmpleado").value;
+        const contraseña = document.getElementById("contrasenaEmpleado").value;
+        if (email && contraseña) {
+            alert(`Empleado creado: ${nombre} ${apellido}, Email: ${email}`);
+
+
+            document.getElementById("nombreEmpleado").value = "";
+            document.getElementById("apellidoEmpleado").value = "";
+            document.getElementById("emailEmpleado").value = "";
+        } else {
+            alert("Por favor, complete todos los campos correctamente");
+        }
+    }
+
+    function mostrarEmpleadoScreen() {
+        // Verifica si el usuario es un empleado (puedes ajustar esta lógica según tu sistema)
+        if (nombreUsuario && nombreUsuario.toLowerCase().startsWith("emp")) {
+            document.getElementById("login").style.display = "none";
+            document.getElementById("salas").style.display = "none";
+            document.getElementById("logout").style.display = "block";
+            document.getElementById("ticket").style.display = "none";
+            document.getElementById("empleadoScreen").style.display = "block";
+        } else {
+            alert("Acceso solo para empleados.");
+        }
+    }
+
+
+
+
+    /* 
+     
+    crear empleados, 
+      total de ventas x usuario
+      total de clientes atendidos
+      total de ventas de clientes con membresia 
+      total de ventas de clientes sin membresia
+        total de boletos vendidos x pelicula
+        total de boletos vendidos x sala
+        ver cual es la pelocula mas vendida
+        ver cual es la pelicula menos vendida */
+
+   
 
 
     

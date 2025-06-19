@@ -5,16 +5,16 @@
     display: inline-block;
     border-radius: 4px;
     cursor: pointer;
-}
+} 
 .disponible {
-    background-color: #4caf50;
+    background-color: #70c773;
 }
 .ocupado {
-    background-color: #f44336;
+    background-color: #d19490;
     cursor: not-allowed;
 }
 .reservado {
-    background-color: #ffc107;
+    background-color: #ebc554;
     cursor: not-allowed;
 }
 
@@ -88,14 +88,14 @@ button {
     border: none;
     border-radius: 6px;
     font-size: 16px;
-    background-color: #c9479f;
+    background-color: #cc4a71;
     color: white;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #ff58ac;
+    background-color: #cc4a71;
 }
 
 #contenedor-asientos {
@@ -111,7 +111,7 @@ button:hover {
 
 .asiento {
     width: 60px;
-    height: 60px;
+    height: 50px;
     margin: 5px;
     display: inline-block;
     border-radius: 4px;
@@ -148,7 +148,7 @@ body #login {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 420px;
-    border-left: 8px solid #c9479f;
+    border-left: 8px solid #cc4a71;
 }
 
 body #login input,
@@ -159,7 +159,7 @@ body #login button {
     padding: 12px 15px;
     font-size: 1rem;
     border-radius: 6px;
-    border: 1.5px solid #c9479f;
+    border: 1.5px solid #cc4a71;
     box-sizing: border-box;
     transition: border-color 0.3s ease;
 }
@@ -170,7 +170,7 @@ body#login input:focus {
 }
 
 body#login button {
-    background-color: #c9479f;
+    background-color: #cc4a71;
     color: white;
     font-weight: 600;
     border: none;
@@ -221,5 +221,79 @@ body #login input::placeholder {
   font-weight: bold;
   text-align: right;
   color: #793d87;
+}
+
+#EmpleadoScreen {
+    display: none;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(60, 50, 107, 0.13);
+    padding: 32px 28px 28px 28px;
+    max-width: 900px;
+    margin: 40px auto 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+#EmpleadoScreen h2 {
+    color: #3c326b;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: linear-gradient(135deg, #fce1f3 70%, #ff58ac 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(121, 61, 135, 0.08);
+    padding: 22px 18px 18px 18px;
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s;
+    border-left: 6px solid #cc4a71;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.card:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 6px 18px rgba(121, 61, 135, 0.18);
+    background: linear-gradient(135deg, #ff58ac 60%, #fce1f3 100%);
+}
+
+.card h3 {
+    color: #793d87;
+    font-size: 1.1rem;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.card p {
+    color: #052852;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+    align-self: flex-end;
+}
+
+#ventasContainer {
+    margin-top: 28px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(60, 50, 107, 0.08);
+    padding: 18px 20px;
+    min-height: 60px;
+    font-size: 1rem;
+    color: #3c326b;
 }
 

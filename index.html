@@ -7,6 +7,7 @@
 </head>
 <body onload="cargarPeliculas()">
     <div id="login">
+        <h1>Bienvenid@!</h1>
         <h2>Iniciar sesión</h2>
         <input type = "text" id = "usuario" placeholder = "Usuario">
         <input type = "password" id = "contrasena" placeholder = "Contraseña">
@@ -37,5 +38,44 @@
     </div>
 
     <script src="script.js"></script>
+
+    <div id="EmpleadoScreen" style="display: none;">
+        <h2>Bienvenido Empleado</h2>
+        <div class="dashboard">
+            <div class="card" onclick="mostrarVentasPorUsuario()">
+                <h3>Total de ventas por usuario</h3>
+                <p id="ventasPorUsuario">-</p>
+            </div>
+            <div class="card" onclick="mostrarClientesAtendidos()">
+                <h3>Total de clientes atendidos</h3>
+                <p id="clientesAtendidos">-</p>
+            </div>
+            <div class="card" onclick="mostrarVentasConMembresia()">
+                <h3>Total de ventas con membresía</h3>
+                <p id="ventasConMembresia">-</p>
+            </div>
+            <div class="card" onclick="mostrarVentasSinMembresia()">
+                <h3>Total de ventas sin membresía</h3>
+                <p id="ventasSinMembresia">-</p>
+            </div>
+            <div class="card" onclick="mostrarBoletosPorPelicula()">
+                <h3>Boletos vendidos por película</h3>
+                <p id="boletosPorPelicula">-</p>
+            </div>
+            <div class="card" onclick="mostrarBoletosPorSala()">
+                <h3>Boletos vendidos por sala</h3>
+                <p id="boletosPorSala">-</p>
+            </div>
+            <div class="card" onclick="mostrarPeliculaMasVendida()">
+                <h3>Película más vendida</h3>
+                <p id="peliculaMasVendida">-</p>
+            </div>
+            <div class="card" onclick="mostrarPeliculaMenosVendida()">
+                <h3>Película menos vendida</h3>
+                <p id="peliculaMenosVendida">-</p>
+            </div>
+        </div>
+        <div id="ventasContainer"></div>
+    </div>
 </body>
 </html>
