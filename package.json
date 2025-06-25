@@ -1,0 +1,29 @@
+{
+  "name": "interfaz-de-cine",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "description": "",
+  "main": "script.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/up220187/Interfaz-de-cine.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/up220187/Interfaz-de-cine/issues"
+  },
+  "homepage": "https://github.com/up220187/Interfaz-de-cine#readme"
+}
