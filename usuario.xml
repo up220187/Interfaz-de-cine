@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?> 
-<usuarios>
-    <usuario>
-        <nombre>Reyna</nombre>
-        <contrasena>12345</contrasena>
-        <correo>reyna@gmail.com</correo>
-        <empleado>1</empleado>
-    </usuario>
-</usuarios>

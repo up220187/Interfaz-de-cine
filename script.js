@@ -192,7 +192,11 @@ function cargarPeliculas() {
             console.error("Error cargando películas:", error);
             document.getElementById("peliculasContainer").textContent = "Error cargando películas";
         });
+
+
+        //
 }
+
 
 function mostrarPeliculaSegunSala() {
     const salaSeleccionada = document.getElementById("salaSelecion").value;
@@ -489,3 +493,7 @@ window.onload = function() {
 // localStorage.removeItem(`asientos_${i}`);
 // localStorage.removeItem(`asientosOcupados_${i}`);}
 // location.reload();
+
+
+
+// 

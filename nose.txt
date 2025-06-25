@@ -1,0 +1,67 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+
+const app = express();
+const PORT = 3000;
+const XML_PATH = path.join(__dirname, 'productos.xml');
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(__dirname));
+
+// Endpoint para obtener el XML
+app.get('/productos.xml', (req, res) => {
+    res.sendFile(XML_PATH);
+});
+
+// Función para escapar caracteres especiales en XML
+function escapeXML(str) {
+    if (typeof str !== 'string') return str;
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+// Endpoint para guardar cambios en el XML
+app.post('/guardar', (req, res) => {
+    const productos = req.body; // Array de productos
+
+    // Construir el XML manualmente
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<productos>\n';
+    productos.forEach(p => {
+        xml += `    <producto>\n`;
+        xml += `        <id>${escapeXML(p.id)}</id>\n`;
+        xml += `        <nombre>${escapeXML(p.nombre)}</nombre>\n`;
+        xml += `        <precio>${escapeXML(p.precio)}</precio>\n`;
+        xml += `        <stock>${escapeXML(p.stock)}</stock>\n`;
+        xml += `        <marca>${escapeXML(p.marca)}</marca>\n`;
+        xml += `    </producto>\n`;
+    });
+    xml += '</productos>\n';
+
+    fs.writeFile(XML_PATH, xml, (err) => {
+        if (err) {
+            console.error('Error al guardar el XML:', err);
+            return res.status(500).json({ ok: false, error: 'No se pudo guardar el archivo XML.' });
+        }
+        res.json({ ok: true });
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor escuchando en http://localhost:${PORT}`);
+});
+
+
+
+
+
+* guardar empleados en el xml 
+* que use ese xml para entrar y ver las estadisticas
+* el empleado agregarle que tambien puede vender boletos y ponerle el nombre del cliente
