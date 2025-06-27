@@ -300,38 +300,42 @@ function actualizarListaEmpleados() {
 // Procesa la compra de boletos y guarda en XML
 async function comprar() {
   const salaSeleccionada = document.getElementById("salaSelecion").value;
-  const reservados = document.querySelectorAll(".asiento.reservado");
+  // Cambia esta línea para buscar asientos "seleccionado" en lugar de "reservado"
+  const asientosSeleccionados = document.querySelectorAll(".asiento.seleccionado");
 
-  if (reservados.length === 0) {
+  if (asientosSeleccionados.length === 0) {
     alert("Selecciona al menos un asiento");
     return;
   }
 
   const tieneMembresia = confirm("¿El cliente tiene membresía? (Aceptar = Sí, Cancelar = No)");
   const precioUnitario = tieneMembresia ? 65 : 75;
-  const total = reservados.length * precioUnitario;
+  const total = asientosSeleccionados.length * precioUnitario;
 
   // Registrar venta
   const venta = {
     usuario: nombreUsuario,
     fecha: new Date().toISOString(),
     sala: salaSeleccionada,
-    asientos: Array.from(reservados).map((a) => `${a.dataset.fila}${a.dataset.numero}`),
+    asientos: Array.from(asientosSeleccionados).map((a) => `${a.dataset.fila}${a.dataset.numero}`),
     total,
-    pelicula: peliculasData.find((p) => p.sala === salaSeleccionada).titulo,
+    pelicula: peliculasData.find((p) => p.sala === salaSeleccionada)?.titulo || "Desconocida",
     conMembresia: tieneMembresia,
   };
 
   ventas.push(venta);
   await guardarVentas();
 
-  // Actualizar estado de asientos (localStorage temporal)
-  reservados.forEach((asiento) => {
+  // Actualizar estado de asientos
+  asientosSeleccionados.forEach((asiento) => {
     const idAsiento = asiento.dataset.id;
-    if (!estadoAsientos[salaSeleccionada]) estadoAsientos[salaSeleccionada] = {};
+    if (!estadoAsientos[salaSeleccionada]) {
+      estadoAsientos[salaSeleccionada] = {};
+    }
     estadoAsientos[salaSeleccionada][idAsiento] = true;
 
-    asiento.classList.remove("reservado", "disponible");
+    // Cambiar estado visual del asiento
+    asiento.classList.remove("seleccionado", "disponible");
     asiento.classList.add("ocupado");
     asiento.style.cursor = "not-allowed";
     asiento.onclick = null;
@@ -497,12 +501,10 @@ function generarAsientos() {
   // Limpiar contenedor
   contenedor.innerHTML = "";
 
-  // Inicializar estado de asientos si no existe
-  if (!estadoAsientos[salaSeleccionada]) {
-    estadoAsientos[salaSeleccionada] = JSON.parse(
-      localStorage.getItem(`asientos_${salaSeleccionada}`)
-    ) || {};
-  }
+  // Obtener estado de asientos desde localStorage o inicializar
+  estadoAsientos[salaSeleccionada] = JSON.parse(
+    localStorage.getItem(`asientos_${salaSeleccionada}`)
+  ) || {};
 
   // Crear asientos (5 filas A-E, 5 asientos por fila)
   const filas = ['A', 'B', 'C', 'D', 'E'];
@@ -526,7 +528,14 @@ function generarAsientos() {
       } else {
         asiento.classList.add("disponible");
         asiento.addEventListener("click", function() {
-          this.classList.toggle("seleccionado");
+          // Toggle selección
+          if (this.classList.contains("seleccionado")) {
+            this.classList.remove("seleccionado");
+            this.classList.add("disponible");
+          } else {
+            this.classList.remove("disponible");
+            this.classList.add("seleccionado");
+          }
         });
       }
 

@@ -13,7 +13,7 @@
     background-color: #d19490;
     cursor: not-allowed;
 }
-.reservado {
+.asiento.seleccionado {
     background-color: #ebc554;
     cursor: not-allowed;
 }
