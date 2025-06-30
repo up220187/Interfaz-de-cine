@@ -2,7 +2,6 @@ let usuarioActual = null;
 let peliculas = [];
 let asientosSeleccionados = [];
 
-// Revisar sesión al cargar
 function checkSesion() {
   const usuarioJSON = sessionStorage.getItem('usuario');
   if (usuarioJSON) {
@@ -14,6 +13,7 @@ function checkSesion() {
   cargarPeliculas();
 }
 
+//login
 function mostrarLogin() {
   document.getElementById('login').style.display = 'block';
   document.getElementById('salas').style.display = 'none';
@@ -23,6 +23,8 @@ function mostrarLogin() {
   document.getElementById('ticket').style.display = 'none';
 }
 
+
+//que muestra segun el rol
 function mostrarPanelPorRol(rol) {
   document.getElementById("login").style.display = "none";
 
@@ -40,6 +42,7 @@ function mostrarPanelPorRol(rol) {
   }
 }
 
+//inicio de sesion
 async function iniciarSesion() {
   const usuario = document.getElementById("usuario").value.trim();
   const contrasena = document.getElementById("contrasena").value.trim();
@@ -73,7 +76,7 @@ function cerrarSesion() {
   location.reload();
 }
 
-// Cargar empleados (solo admin)
+// Cargar empleados para admin
 async function cargarEmpleados() {
   try {
     const res = await fetch("/api/usuarios");
@@ -118,7 +121,7 @@ async function crearEmpleado() {
   }
 }
 
-// Cargar películas
+//  películas
 async function cargarPeliculas() {
   try {
     const res = await fetch("/api/peliculas");
@@ -152,7 +155,6 @@ async function cargarPeliculasParaCaseta() {
       select.appendChild(opt);
     });
 
-    // Llamar a generar asientos automáticamente al cargar
     select.addEventListener("change", generarAsientosCaseta);
   } catch (err) {
     console.error("Error al cargar películas para caseta:", err);
@@ -160,7 +162,7 @@ async function cargarPeliculasParaCaseta() {
 }
 
 
-// Generar asientos con ocupados desde DB y selección
+// Generar asientos con ocupado
 async function generarAsientos() {
   const cont = document.getElementById("asientosContainer");
   cont.innerHTML = "";
@@ -255,7 +257,10 @@ async function comprar() {
     const data = await res.json();
     if (!data.success) return alert(data.error || "Error en la compra.");
 
-    let detalles = `Usuario: ${usuarioActual?.nombre || "Invitado"}<br>`;
+    const usuarioNombre = sessionStorage.getItem("usuario")
+  ? JSON.parse(sessionStorage.getItem("usuario")).usuario
+  : "Invitado";
+let detalles = `Usuario: ${usuarioNombre}<br>`;
     reservados.forEach(a => {
       const id = a.dataset.id;
       const fila = id.charAt(0);
@@ -283,7 +288,7 @@ async function comprar() {
     alert("Error de servidor");
   }
 }
-
+ // estadisticas de empleado
 async function cargarEstadisticas() {
   try {
     const res = await fetch('/api/ventas');
@@ -341,7 +346,7 @@ else estadisticas.sinMembresia++;
 }
 
 
-// Mostrar boleto
+//  boleto
 async function venderDesdeCaseta() {
   const pelicula = document.getElementById("peliculaCaseta").value;
   const nombreCliente = document.getElementById("nombreClienteCaseta").value.trim();
@@ -404,6 +409,7 @@ async function venderDesdeCaseta() {
   }
 }
 
+//asientos pero para caseta
 function generarAsientosCaseta() {
   const contenedor = document.getElementById("asientosCasetaContainer");
   contenedor.innerHTML = "";

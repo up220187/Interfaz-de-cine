@@ -7,14 +7,14 @@
     cursor: pointer;
 } 
 .disponible {
-    background-color: #70c773;
+    background-color: #bcebbe;
 }
 .ocupado {
-    background-color: #d19490;
+    background-color: #c0554d;
     cursor: not-allowed;
 }
 .asiento.seleccionado {
-    background-color: #ebc554;
+    background-color: #ffe8a1;
     cursor: not-allowed;
 }
 
