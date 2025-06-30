@@ -1,546 +1,468 @@
-const API_URL = 'http://localhost:3000/api';
-const ADMIN_CREDENTIALS = { username: "admin", password: "admin123" };
+let usuarioActual = null;
+let peliculas = [];
+let asientosSeleccionados = [];
 
-// Variables globales
-let nombreUsuario = "";
-let peliculasData = [];
-let empleados = [];
-let ventas = [];
-let estadoAsientos = {};
+// Revisar sesión al cargar
+function checkSesion() {
+  const usuarioJSON = sessionStorage.getItem('usuario');
+  if (usuarioJSON) {
+    usuarioActual = JSON.parse(usuarioJSON);
+    mostrarPanelPorRol(usuarioActual.rol);
+  } else {
+    mostrarLogin();
+  }
+  cargarPeliculas();
+}
 
-// Función mejorada para iniciar sesión
+function mostrarLogin() {
+  document.getElementById('login').style.display = 'block';
+  document.getElementById('salas').style.display = 'none';
+  document.getElementById('AdminScreen').style.display = 'none';
+  document.getElementById('EmpleadoScreen').style.display = 'none';
+  document.getElementById('casetaEmpleado').style.display = 'none';
+  document.getElementById('ticket').style.display = 'none';
+}
+
+function mostrarPanelPorRol(rol) {
+  document.getElementById("login").style.display = "none";
+
+  if (rol === "admin") {
+    document.getElementById("AdminScreen").style.display = "block";
+    cargarEmpleados();
+  } else if (rol === "empleado") {
+    document.getElementById("EmpleadoScreen").style.display = "block";
+    document.getElementById("casetaEmpleado").style.display = "block";
+    cargarPeliculasParaCaseta();
+    generarAsientosCaseta();                
+    cargarEstadisticas(); 
+  } else {
+    document.getElementById("salas").style.display = "block";
+  }
+}
+
 async function iniciarSesion() {
-  const user = document.getElementById("usuario").value.trim();
-  const pass = document.getElementById("contrasena").value.trim();
+  const usuario = document.getElementById("usuario").value.trim();
+  const contrasena = document.getElementById("contrasena").value.trim();
 
-  if (!user || !pass) {
-    mostrarError("Ingrese usuario y contraseña");
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usuario, contrasena }),
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('salas').style.display = 'block';
+    document.getElementById('AdminScreen').style.display = 'none';
+    document.getElementById('EmpleadoScreen').style.display = 'none';
+    document.getElementById('casetaEmpleado').style.display = 'none';
+    document.getElementById('ticket').style.display = 'none';
     return;
   }
 
-  try {
-    // 1. Verificar si es admin
-    if (user === ADMIN_CREDENTIALS.username && pass === ADMIN_CREDENTIALS.password) {
-      iniciarSesionAdmin();
-      return;
-    }
-
-    // 2. Verificar si es empleado
-    const empleados = await obtenerEmpleados();
-    const empleado = empleados.find(emp => 
-      emp.usuario === user && emp.contrasena === pass
-    );
-
-    if (empleado) {
-      iniciarSesionEmpleado(empleado);
-      return;
-    }
-
-    // 3. Usuario normal
-    iniciarSesionUsuarioNormal(user);
-
-  } catch (error) {
-    console.error("Error al iniciar sesión:", error);
-    mostrarError("Error de conexión. Intente nuevamente.");
-  }
+  usuarioActual = data.usuario;
+  sessionStorage.setItem("usuario", JSON.stringify(usuarioActual));
+  mostrarPanelPorRol(usuarioActual.rol);
 }
 
-async function obtenerEmpleados() {
-  try {
-    const response = await fetch(`${API_URL}/empleados`);
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
-    const data = await response.json();
-    return Array.isArray(data) ? data : [data]; // Asegurar que siempre sea array
-  } catch (error) {
-    console.error("Error al obtener empleados:", error);
-    throw error;
-  }
+function cerrarSesion() {
+  usuarioActual = null;
+  sessionStorage.removeItem("usuario");
+  location.reload();
 }
 
-// Función para iniciar sesión como administrador
-function iniciarSesionAdmin() {
-  console.log("Iniciando sesión como administrador");
-  ocultarTodosPaneles();
-  document.getElementById("AdminScreen").style.display = "block";
-  document.getElementById("logout").style.display = "block";
-  actualizarListaEmpleados();
-}
-
-// Función para iniciar sesión como empleado
-function iniciarSesionEmpleado(empleado) {
-  console.log(`Iniciando sesión como empleado: ${empleado.nombre}`);
-  ocultarTodosPaneles();
-  document.getElementById("EmpleadoScreen").style.display = "block";
-  document.getElementById("logout").style.display = "block";
-  actualizarEstadisticas();
-}
-
-// Función para iniciar sesión como usuario normal
-function iniciarSesionUsuarioNormal(usuario) {
-  console.log(`Iniciando sesión como usuario normal: ${usuario}`);
-  ocultarTodosPaneles();
-  nombreUsuario = usuario;
-  document.getElementById("salas").style.display = "block";
-  document.getElementById("logout").style.display = "block";
-}
-
-// Función para ocultar todos los paneles
-function ocultarTodosPaneles() {
-  const paneles = ["login", "AdminScreen", "EmpleadoScreen", "salas", "ticket"];
-  paneles.forEach(id => {
-    const panel = document.getElementById(id);
-    if (panel) panel.style.display = "none";
-  });
-}
-// Función genérica para obtener datos
-async function obtenerDatos(endpoint) {
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`);
-    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error(`Error obteniendo ${endpoint}:`, error);
-    throw error;
-  }
-}
-
-// Carga inicial de datos
-async function cargarDatosIniciales() {
-  try {
-    [peliculasData, empleados, ventas] = await Promise.all([
-      obtenerDatos('/peliculas'),
-      obtenerDatos('/empleados'),
-      obtenerDatos('/ventas')
-    ]);
-  } catch (error) {
-    console.error("Error cargando datos iniciales:", error);
-  }
-}
-
-// Funciones de visualización
-function mostrarPeliculaSegunSala() {
-  const sala = document.getElementById("salaSelecion").value;
-  const contenedor = document.getElementById("peliculasContainer");
-  const pelicula = peliculasData.find(p => p.sala === sala);
-  
-  contenedor.innerHTML = pelicula ? `
-    <h3>${pelicula.titulo}</h3>
-    <p><strong>Categoría:</strong> ${pelicula.categoria}</p>
-    <p><strong>Sala:</strong> ${pelicula.sala}</p>
-  ` : "No hay película en esta sala";
-}
-// Inicialización al cargar la página
-document.addEventListener("DOMContentLoaded", async () => {
-  await cargarDatosIniciales();
-  
-  // Evento para cambiar de sala
-  document.getElementById("salaSelecion")?.addEventListener("change", () => {
-    mostrarPeliculaSegunSala();
-    generarAsientos();
-  });
-});
-
-// Carga todos los datos necesarios al inicio
-async function cargarDatosIniciales() {
-  await cargarPeliculas();
-  await cargarEmpleados();
-  await cargarVentas();
-}
-
-async function cargarPeliculas() {
-  try {
-    const response = await fetch(`${API_URL}/peliculas`);
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
-    peliculasData = await response.json();
-    
-    // Verifica que los datos tengan el formato correcto
-    if (!Array.isArray(peliculasData)) {
-      console.warn('Los datos de películas no son un array:', peliculasData);
-      peliculasData = [];
-    }
-  } catch (error) {
-    console.error("Error cargando películas:", error);
-    mostrarError("Error al cargar cartelera");
-    peliculasData = [];
-  }
-}
-
-// Carga los empleados desde XML (convertido a JSON por Node.js)
+// Cargar empleados (solo admin)
 async function cargarEmpleados() {
   try {
-    const response = await fetch(`${API_URL}/empleados`);
-    empleados = await response.json();
-  } catch (error) {
-    console.error("Error cargando empleados:", error);
-    empleados = [];
-  }
-}
+    const res = await fetch("/api/usuarios");
+    const lista = document.getElementById("listaEmpleados");
+    const usuarios = await res.json();
 
-// Carga las ventas desde XML (convertido a JSON por Node.js)
-async function cargarVentas() {
-  try {
-    const response = await fetch(`${API_URL}/ventas`);
-    ventas = await response.json();
-  } catch (error) {
-    console.error("Error cargando ventas:", error);
-    ventas = [];
-  }
-}
-
-// Guarda los empleados (Node.js lo convierte a XML)
-async function guardarEmpleados() {
-  try {
-    const response = await fetch(`${API_URL}/empleados`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(empleados),
+    lista.innerHTML = '<table><tr><th>Nombre</th><th>Usuario</th><th>Rol</th></tr>';
+    usuarios.forEach(u => {
+      if (u.rol === 'empleado' || u.rol === 'admin') {
+        lista.innerHTML += `<tr><td>${u.nombre}</td><td>${u.usuario}</td><td>${u.rol}</td></tr>`;
+      }
     });
-    if (!response.ok) throw new Error("Error al guardar empleados");
-  } catch (error) {
-    console.error("Error:", error);
+    lista.innerHTML += '</table>';
+  } catch (err) {
+    console.error("Error cargando empleados", err);
   }
 }
 
-// Guarda las ventas (Node.js lo convierte a XML)
-async function guardarVentas() {
-  try {
-    const response = await fetch(`${API_URL}/ventas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ventas),
-    });
-    if (!response.ok) throw new Error("Error al guardar ventas");
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-
-// Añade un nuevo empleado y lo guarda en XML
+// Crear empleado
 async function crearEmpleado() {
-  const nombre = document.getElementById("nombreEmpleado").value;
-  const usuario = document.getElementById("usuarioEmpleado").value;
-  const contrasena = document.getElementById("contrasenaEmpleado").value;
+  const nombre = document.getElementById("nombreEmpleado").value.trim();
+  const usuario = document.getElementById("usuarioEmpleado").value.trim();
+  const contrasena = document.getElementById("contrasenaEmpleado").value.trim();
 
   if (!nombre || !usuario || !contrasena) {
-    alert("Complete todos los campos");
-    return;
+    return alert("Completa todos los campos.");
   }
 
-  if (empleados.some((emp) => emp.usuario === usuario)) {
-    alert("Este usuario ya existe");
-    return;
-  }
-
-  const nuevoEmpleado = {
-    id: Date.now(),
-    nombre,
-    usuario,
-    contrasena,
-    fechaRegistro: new Date().toLocaleString(),
-  };
-
-  empleados.push(nuevoEmpleado);
-  await guardarEmpleados();
-  actualizarListaEmpleados();
-
-  // Limpiar el formulario
-  document.getElementById("nombreEmpleado").value = "";
-  document.getElementById("usuarioEmpleado").value = "";
-  document.getElementById("contrasenaEmpleado").value = "";
-}
-
-// Elimina un empleado y actualiza el XML
-async function eliminarEmpleado(id) {
-  if (!confirm("¿Está seguro de eliminar este empleado?")) return;
-
-  empleados = empleados.filter((emp) => emp.id !== id);
-  await guardarEmpleados();
-  actualizarListaEmpleados();
-}
-
-// Muestra la lista de empleados en la tabla
-function actualizarListaEmpleados() {
-  const contenedor = document.getElementById("listaEmpleados");
-  contenedor.innerHTML = empleados.length === 0
-    ? "<p class='no-empleados'>No hay empleados registrados</p>"
-    : `
-      <table class="tabla-empleados">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Usuario</th>
-            <th>Fecha Registro</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${empleados.map(
-            (emp) => `
-            <tr>
-              <td>${emp.nombre}</td>
-              <td>${emp.usuario}</td>
-              <td>${emp.fechaRegistro}</td>
-              <td>
-                <button onclick="eliminarEmpleado(${emp.id})" class="btn-eliminar">
-                  Eliminar
-                </button>
-              </td>
-            </tr>
-          `
-          ).join("")}
-        </tbody>
-      </table>
-    `;
-}
-
-// Procesa la compra de boletos y guarda en XML
-async function comprar() {
-  const salaSeleccionada = document.getElementById("salaSelecion").value;
-  // Cambia esta línea para buscar asientos "seleccionado" en lugar de "reservado"
-  const asientosSeleccionados = document.querySelectorAll(".asiento.seleccionado");
-
-  if (asientosSeleccionados.length === 0) {
-    alert("Selecciona al menos un asiento");
-    return;
-  }
-
-  const tieneMembresia = confirm("¿El cliente tiene membresía? (Aceptar = Sí, Cancelar = No)");
-  const precioUnitario = tieneMembresia ? 65 : 75;
-  const total = asientosSeleccionados.length * precioUnitario;
-
-  // Registrar venta
-  const venta = {
-    usuario: nombreUsuario,
-    fecha: new Date().toISOString(),
-    sala: salaSeleccionada,
-    asientos: Array.from(asientosSeleccionados).map((a) => `${a.dataset.fila}${a.dataset.numero}`),
-    total,
-    pelicula: peliculasData.find((p) => p.sala === salaSeleccionada)?.titulo || "Desconocida",
-    conMembresia: tieneMembresia,
-  };
-
-  ventas.push(venta);
-  await guardarVentas();
-
-  // Actualizar estado de asientos
-  asientosSeleccionados.forEach((asiento) => {
-    const idAsiento = asiento.dataset.id;
-    if (!estadoAsientos[salaSeleccionada]) {
-      estadoAsientos[salaSeleccionada] = {};
-    }
-    estadoAsientos[salaSeleccionada][idAsiento] = true;
-
-    // Cambiar estado visual del asiento
-    asiento.classList.remove("seleccionado", "disponible");
-    asiento.classList.add("ocupado");
-    asiento.style.cursor = "not-allowed";
-    asiento.onclick = null;
+  const res = await fetch("/api/usuarios", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, usuario, contrasena, rol: "empleado" }),
   });
 
-  localStorage.setItem(`asientos_${salaSeleccionada}`, JSON.stringify(estadoAsientos[salaSeleccionada]));
+  const data = await res.json();
 
-  mostrarTicket(venta);
-
-  if (document.getElementById("EmpleadoScreen").style.display === "block") {
-    actualizarEstadisticas();
+  if (data.success) {
+    alert("Empleado creado con éxito");
+    cargarEmpleados();
+  } else {
+    alert(data.error || "Error al crear el empleado");
   }
 }
 
-// Muestra el ticket de compra
-function mostrarTicket(venta) {
-  const detalles = `
-    <strong>Usuario:</strong> ${venta.usuario}<br>
-    <strong>Película:</strong> ${venta.pelicula}<br>
-    <strong>Sala:</strong> ${venta.sala}<br>
-    <strong>Asientos:</strong><br>
-    ${venta.asientos.map((asiento) => `• ${asiento}<br>`).join("")}
-    <strong>Total:</strong> $${venta.total}
-  `;
-
-  document.getElementById("detallesBoleto").innerHTML = detalles;
-  document.getElementById("ticket").style.display = "block";
-}
-
-// Actualiza las estadísticas de ventas
-function actualizarEstadisticas() {
-  if (ventas.length === 0) {
-    document.querySelectorAll("#EmpleadoScreen .card p").forEach((el) => {
-      el.textContent = "0";
-    });
-    return;
-  }
-
-  // Total de ventas
-  document.getElementById("ventasPorUsuario").textContent = ventas.length;
-
-  // Clientes únicos
-  const clientesUnicos = [...new Set(ventas.map((v) => v.usuario))];
-  document.getElementById("clientesAtendidos").textContent = clientesUnicos.length;
-
-  // Ventas con/sin membresía
-  const conMembresia = ventas.filter((v) => v.conMembresia).length;
-  document.getElementById("ventasConMembresia").textContent = conMembresia;
-  document.getElementById("ventasSinMembresia").textContent = ventas.length - conMembresia;
-
-  // Boletos por película/sala
-  const boletosPorPelicula = {};
-  const boletosPorSala = {};
-  ventas.forEach((v) => {
-    boletosPorPelicula[v.pelicula] = (boletosPorPelicula[v.pelicula] || 0) + v.asientos.length;
-    boletosPorSala[v.sala] = (boletosPorSala[v.sala] || 0) + v.asientos.length;
-  });
-
-  document.getElementById("boletosPorPelicula").textContent = Object.keys(boletosPorPelicula).length;
-  document.getElementById("boletosPorSala").textContent = Object.keys(boletosPorSala).length;
-
-  // Película más/menos vendida
-  const peliculasVentas = Object.entries(boletosPorPelicula);
-  if (peliculasVentas.length > 0) {
-    peliculasVentas.sort((a, b) => b[1] - a[1]);
-    document.getElementById("peliculaMasVendida").textContent = peliculasVentas[0][0];
-    if (peliculasVentas.length > 1) {
-      document.getElementById("peliculaMenosVendida").textContent =
-        peliculasVentas[peliculasVentas.length - 1][0];
-    }
-  }
-}
-
-async function iniciarSesion() {
-  const user = document.getElementById("usuario").value.trim();
-  const pass = document.getElementById("contrasena").value.trim();
-  
-  if (!user || !pass) {
-    mostrarError("Ingrese usuario y contraseña");
-    return;
-  }
-
+// Cargar películas
+async function cargarPeliculas() {
   try {
-    // Mostrar carga
-    const btnLogin = document.querySelector("#login button");
-    btnLogin.disabled = true;
-    btnLogin.textContent = "Verificando...";
+    const res = await fetch("/api/peliculas");
+    peliculas = await res.json();
 
-    // 1. Verificar si es admin
-    if (user === ADMIN_CREDENTIALS.username && pass === ADMIN_CREDENTIALS.password) {
-      iniciarSesionAdmin();
-      return;
+    const container = document.getElementById("peliculasContainer");
+    if (container) {
+      container.innerHTML = "";
+      peliculas.forEach(p => {
+        const div = document.createElement("div");
+        div.innerText = `${p.titulo} (${p.genero})`;
+        container.appendChild(div);
+      });
     }
-
-    // 2. Verificar si es empleado
-    const response = await fetch(`${API_URL}/empleados`);
-    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-    
-    const empleados = await response.json();
-    const empleado = empleados.find(emp => 
-      emp.usuario === user && emp.contrasena === pass
-    );
-    
-    if (empleado) {
-      iniciarSesionEmpleado(empleado);
-      return;
-    }
-
-    // 3. Usuario normal
-    iniciarSesionUsuarioNormal(user);
-    
-  } catch (error) {
-    console.error("Error al iniciar sesión:", error);
-    mostrarError("Credenciales incorrectas o error de conexión");
-  } finally {
-    const btnLogin = document.querySelector("#login button");
-    if (btnLogin) {
-      btnLogin.disabled = false;
-      btnLogin.textContent = "Entrar";
-    }
+  } catch (err) {
+    console.error("Error cargando películas", err);
   }
 }
 
-function mostrarError(mensaje) {
-  const errorDiv = document.getElementById("error-login") || document.createElement("div");
-  errorDiv.id = "error-login";
-  errorDiv.style.color = "red";
-  errorDiv.style.marginTop = "10px";
-  errorDiv.textContent = mensaje;
-  
-  const loginDiv = document.getElementById("login");
-  if (!document.getElementById("error-login")) {
-    loginDiv.appendChild(errorDiv);
+async function cargarPeliculasParaCaseta() {
+  try {
+    const select = document.getElementById("peliculaCaseta");
+    select.innerHTML = "<option value=''>Selecciona</option>";
+
+    const res = await fetch("/api/peliculas");
+    const data = await res.json();
+    data.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.titulo;
+      opt.textContent = p.titulo;
+      select.appendChild(opt);
+    });
+
+    // Llamar a generar asientos automáticamente al cargar
+    select.addEventListener("change", generarAsientosCaseta);
+  } catch (err) {
+    console.error("Error al cargar películas para caseta:", err);
   }
 }
 
-// Cierra la sesión
-function cerrarSesion() {
-  nombreUsuario = "";
-  ocultarTodosPaneles();
-  document.getElementById("login").style.display = "block";
-  document.getElementById("usuario").value = "";
-  document.getElementById("contrasena").value = "";
-}
 
-// Oculta todos los paneles
-function ocultarTodosPaneles() {
-  document.getElementById("login").style.display = "none";
-  ["AdminScreen", "EmpleadoScreen", "salas", "ticket"].forEach((id) => {
-    document.getElementById(id).style.display = "none";
+// Generar asientos con ocupados desde DB y selección
+async function generarAsientos() {
+  const cont = document.getElementById("asientosContainer");
+  cont.innerHTML = "";
+  asientosSeleccionados = [];
+
+  const sala = document.getElementById("salaSelecion").value;
+  if (!sala) return;
+
+  // 1. Obtener ventas y marcar ocupados
+  const res = await fetch("/api/ventas");
+  const ventas = await res.json();
+  const ocupados = [];
+
+  ventas.forEach(v => {
+    if (v.sala === parseInt(sala)) {
+      const asientos = v.asientos.split(',');
+      ocupados.push(...asientos.map(a => a.trim()));
+    }
   });
-}
 
-function generarAsientos() {
-  const salaSeleccionada = document.getElementById("salaSelecion").value;
-  const contenedor = document.getElementById("asientosContainer");
-  
-  if (!salaSeleccionada) {
-    contenedor.innerHTML = "<p>Selecciona una sala primero</p>";
-    return;
-  }
+  const filas = ["A", "B", "C", "D"];
+  let contador = 0;
+  for (let fila of filas) {
+    for (let i = 1; i <= 5; i++) {
+      const id = `${fila}${i}`;
+      const div = document.createElement("div");
+      div.className = "asiento";
+      div.textContent = id;
+      div.dataset.id = id;
 
-  // Limpiar contenedor
-  contenedor.innerHTML = "";
-
-  // Obtener estado de asientos desde localStorage o inicializar
-  estadoAsientos[salaSeleccionada] = JSON.parse(
-    localStorage.getItem(`asientos_${salaSeleccionada}`)
-  ) || {};
-
-  // Crear asientos (5 filas A-E, 5 asientos por fila)
-  const filas = ['A', 'B', 'C', 'D', 'E'];
-  
-  filas.forEach(fila => {
-    for (let numero = 1; numero <= 5; numero++) {
-      const idAsiento = `${fila}_${numero}`;
-      const asiento = document.createElement("div");
-      
-      // Configurar atributos del asiento
-      asiento.className = "asiento";
-      asiento.dataset.fila = fila;
-      asiento.dataset.numero = numero;
-      asiento.dataset.id = idAsiento;
-      asiento.textContent = `${fila}${numero}`;
-
-      // Verificar estado del asiento
-      if (estadoAsientos[salaSeleccionada][idAsiento]) {
-        asiento.classList.add("ocupado");
-        asiento.style.cursor = "not-allowed";
+      if (ocupados.includes(id)) {
+        div.classList.add("ocupado");
       } else {
-        asiento.classList.add("disponible");
-        asiento.addEventListener("click", function() {
-          // Toggle selección
-          if (this.classList.contains("seleccionado")) {
-            this.classList.remove("seleccionado");
-            this.classList.add("disponible");
-          } else {
-            this.classList.remove("disponible");
-            this.classList.add("seleccionado");
-          }
-        });
+        div.classList.add("disponible");
+        div.onclick = () => toggleSeleccionAsiento(div);
       }
 
-      contenedor.appendChild(asiento);
+      cont.appendChild(div);
+      contador++;
+      if (contador >= 20) break;
     }
-    contenedor.appendChild(document.createElement("br"));
-  });
+    cont.appendChild(document.createElement("br"));
+    if (contador >= 20) break;
+  }
+}
+
+function toggleSeleccionAsiento(div) {
+  const id = div.dataset.id;
+
+  if (div.classList.contains("seleccionado")) {
+    div.classList.remove("seleccionado");
+    asientosSeleccionados = asientosSeleccionados.filter(a => a !== id);
+  } else {
+    div.classList.add("seleccionado");
+    asientosSeleccionados.push(id);
+  }
+}
+
+// Comprar boletos
+async function comprar() {
+  const reservados = document.querySelectorAll(".asiento.seleccionado");
+  const sala = document.getElementById("salaSelecion").value;
+  const pelicula = peliculas[0]?.titulo || "Película desconocida";
+  const fecha = new Date().toISOString();
+
+  if (!sala || reservados.length === 0) {
+    return alert("Selecciona una sala y al menos un asiento.");
+  }
+
+  const tieneMembresia = confirm("¿El cliente tiene membresía?");
+  const descuento = tieneMembresia ? 0.15 : 0;
+  const precioBase = 75;
+  const total = reservados.length * precioBase * (1 - descuento);
+  const asientos = Array.from(reservados).map(div => div.dataset.id);
+  const usuario_id = usuarioActual ? usuarioActual.id : null;
+
+  try {
+    const res = await fetch("/api/ventas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        usuario_id,
+        pelicula,
+        sala,
+        asientos,
+        total,
+        fecha,
+        membresia: tieneMembresia ? 1 : 0
+      })
+    });
+
+    const data = await res.json();
+    if (!data.success) return alert(data.error || "Error en la compra.");
+
+    let detalles = `Usuario: ${usuarioActual?.nombre || "Invitado"}<br>`;
+    reservados.forEach(a => {
+      const id = a.dataset.id;
+      const fila = id.charAt(0);
+      const numero = id.slice(1);
+      detalles += `Fila ${fila}, Asiento ${numero}<br>`;
+      a.classList.remove("seleccionado");
+      a.classList.add("ocupado");
+      a.onclick = null;
+    });
+
+    if (tieneMembresia) {
+      detalles += `<br><strong>Se aplicó un 15% de descuento por membresía.</strong>`;
+    }
+
+    document.getElementById("detallesBoleto").innerHTML = detalles;
+    document.getElementById("totalPago").textContent = "Total: $" + total.toFixed(2);
+    document.getElementById("ticket").style.display = "block";
+
+    // actualizar estadísticas si está visible
+    if (usuarioActual?.rol === 'admin' || usuarioActual?.rol === 'empleado') {
+      cargarEstadisticas();
+    }
+  } catch (err) {
+    console.error("Error al comprar:", err);
+    alert("Error de servidor");
+  }
+}
+
+async function cargarEstadisticas() {
+  try {
+    const res = await fetch('/api/ventas');
+    const ventas = await res.json();
+    if (!Array.isArray(ventas)) return;
+
+    const estadisticas = {
+      totalVentas: 0,
+      clientes: new Set(),
+      conMembresia: 0,
+      sinMembresia: 0,
+      porPelicula: {},
+      porSala: {},
+    };
+
+    ventas.forEach(v => {
+      estadisticas.totalVentas += v.total;
+      if (v.usuario_id) estadisticas.clientes.add(v.usuario_id);
+
+      const conMembresia = Number(v.membresia) === 1;
+if (conMembresia) estadisticas.conMembresia++;
+else estadisticas.sinMembresia++;
+
+      estadisticas.porPelicula[v.pelicula] = (estadisticas.porPelicula[v.pelicula] || 0) + v.asientos.split(',').length;
+      estadisticas.porSala[v.sala] = (estadisticas.porSala[v.sala] || 0) + v.asientos.split(',').length;
+    });
+
+    const peliculaMasVendida = Object.entries(estadisticas.porPelicula).reduce((a, b) => a[1] > b[1] ? a : b, ["", 0]);
+    const peliculaMenosVendida = Object.entries(estadisticas.porPelicula).reduce((a, b) => a[1] < b[1] ? a : b, ["", Infinity]);
+
+    const contenedor = document.getElementById('ventasContainer');
+    contenedor.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><h4>Total Ventas</h4><p>$${estadisticas.totalVentas.toFixed(2)}</p></div>
+        <div class="stat-card"><h4>Clientes Atendidos</h4><p>${estadisticas.clientes.size}</p></div>
+        <div class="stat-card"><h4>Ventas con Membresía</h4><p>${estadisticas.conMembresia}</p></div>
+        <div class="stat-card"><h4>Ventas sin Membresía</h4><p>${estadisticas.sinMembresia}</p></div>
+        <div class="stat-card"><h4>Película más vendida</h4><p>${peliculaMasVendida[0]}</p></div>
+        <div class="stat-card"><h4>Película menos vendida</h4><p>${peliculaMenosVendida[0]}</p></div>
+      </div>
+
+      <h3>Boletos vendidos por película:</h3>
+      <ul>
+        ${Object.entries(estadisticas.porPelicula).map(([titulo, cant]) => `<li>${titulo}: ${cant}</li>`).join('')}
+      </ul>
+
+      <h3>Boletos vendidos por sala:</h3>
+      <ul>
+        ${Object.entries(estadisticas.porSala).map(([sala, cant]) => `<li>Sala ${sala}: ${cant}</li>`).join('')}
+      </ul>
+    `;
+  } catch (err) {
+    console.error('Error cargando estadísticas:', err);
+  }
+}
+
+
+// Mostrar boleto
+async function venderDesdeCaseta() {
+  const pelicula = document.getElementById("peliculaCaseta").value;
+  const nombreCliente = document.getElementById("nombreClienteCaseta").value.trim();
+  const fecha = new Date().toISOString();
+  const sala = 1; // Sala fija o definida internamente
+  const precioBase = 75;
+  const asientos = asientosSeleccionados;
+
+  if (!pelicula || asientos.length === 0 || !nombreCliente) {
+    return alert("Completa todos los campos para registrar la venta.");
+  }
+
+  const tieneMembresia = confirm("¿El cliente tiene membresía?");
+  const descuento = tieneMembresia ? 0.15 : 0;
+  const total = asientos.length * precioBase * (1 - descuento);
+
+  const venta = {
+    usuario_id: usuarioActual.id,
+    pelicula,
+    sala,
+    asientos,
+    total,
+    fecha,
+    membresia: tieneMembresia ? 1 : 0
+  };
+
+  try {
+    const res = await fetch("/api/ventas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(venta)
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      let detalles = `Empleado: ${usuarioActual.nombre}<br>`;
+      detalles += `Cliente: ${nombreCliente}<br>`;
+      detalles += `Película: ${pelicula}<br>Sala: ${sala}<br>Asientos: ${asientos.join(", ")}<br>`;
+      detalles += `Fecha: ${new Date(fecha).toLocaleString()}<br>`;
+      if (tieneMembresia) {
+        detalles += `<br><strong>Se aplicó un 15% de descuento por membresía.</strong>`;
+      }
+      document.getElementById("detallesBoleto").innerHTML = detalles;
+      document.getElementById("totalPago").textContent = "Total: $" + total.toFixed(2);
+      document.getElementById("ticket").style.display = "block";
+
+      alert("Venta registrada correctamente.");
+
+      if (usuarioActual?.rol === 'admin' || usuarioActual?.rol === 'empleado') {
+        cargarEstadisticas();
+      }
+
+      generarAsientosCaseta();
+    } else {
+      alert(data.error || "Error en la venta");
+    }
+  } catch (err) {
+    console.error("Error registrando venta:", err);
+    alert("Error de servidor");
+  }
+}
+
+function generarAsientosCaseta() {
+  const contenedor = document.getElementById("asientosCasetaContainer");
+  contenedor.innerHTML = "";
+  asientosSeleccionados = [];
+
+  const peliculaSeleccionada = document.getElementById("peliculaCaseta").value;
+  if (!peliculaSeleccionada) {
+    contenedor.innerHTML = "<p style='text-align:center;'>Selecciona una película primero.</p>";
+    return;
+  }
+
+  fetch("/api/ventas")
+    .then(res => res.json())
+    .then(ventas => {
+      const ocupados = new Set();
+
+      ventas.forEach(v => {
+        if (v.pelicula === peliculaSeleccionada) {
+          const asientos = v.asientos.split(',');
+          asientos.forEach(a => ocupados.add(a.trim()));
+        }
+      });
+
+      const filas = ["A", "B", "C", "D"];
+      const columnas = 5;
+
+      const grid = document.createElement("div");
+      grid.id = "contenedor-asientos";
+      grid.style.display = "flex";
+      grid.style.flexWrap = "wrap";
+      grid.style.justifyContent = "center";
+      grid.style.maxWidth = "300px";
+      grid.style.margin = "0 auto";
+
+      filas.forEach(fila => {
+        for (let i = 1; i <= columnas; i++) {
+          const id = `${fila}${i}`;
+          const div = document.createElement("div");
+          div.className = "asiento";
+          div.dataset.fila = fila;
+          div.dataset.numero = i;
+          div.dataset.id = id;
+          div.textContent = id;
+
+          if (ocupados.has(id)) {
+            div.classList.add("ocupado");
+          } else {
+            div.classList.add("disponible");
+            div.addEventListener("click", () => toggleSeleccionAsiento(div));
+          }
+
+          grid.appendChild(div);
+        }
+      });
+
+      contenedor.appendChild(grid);
+    })
+    .catch(err => {
+      console.error("Error generando asientos para caseta:", err);
+      contenedor.innerHTML = "<p>Error al cargar asientos.</p>";
+    });
 }
