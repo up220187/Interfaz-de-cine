@@ -1,7 +1,13 @@
+// ==============================
+// VARIABLES GLOBALES
+// ==============================
 let usuarioActual = null;
 let peliculas = [];
 let asientosSeleccionados = [];
 
+// ==============================
+// CONTROL DE SESIÓN
+// ==============================
 function checkSesion() {
   const usuarioJSON = sessionStorage.getItem('usuario');
   if (usuarioJSON) {
@@ -13,7 +19,15 @@ function checkSesion() {
   cargarPeliculas();
 }
 
-//login
+function cerrarSesion() {
+  usuarioActual = null;
+  sessionStorage.removeItem("usuario");
+  location.reload();
+}
+
+// ==============================
+// LOGIN Y PANEL POR ROL
+// ==============================
 function mostrarLogin() {
   document.getElementById('login').style.display = 'block';
   document.getElementById('salas').style.display = 'none';
@@ -23,8 +37,6 @@ function mostrarLogin() {
   document.getElementById('ticket').style.display = 'none';
 }
 
-
-//que muestra segun el rol
 function mostrarPanelPorRol(rol) {
   document.getElementById("login").style.display = "none";
 
@@ -42,7 +54,6 @@ function mostrarPanelPorRol(rol) {
   }
 }
 
-//inicio de sesion
 async function iniciarSesion() {
   const usuario = document.getElementById("usuario").value.trim();
   const contrasena = document.getElementById("contrasena").value.trim();
@@ -56,12 +67,7 @@ async function iniciarSesion() {
   const data = await res.json();
 
   if (!data.success) {
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('salas').style.display = 'block';
-    document.getElementById('AdminScreen').style.display = 'none';
-    document.getElementById('EmpleadoScreen').style.display = 'none';
-    document.getElementById('casetaEmpleado').style.display = 'none';
-    document.getElementById('ticket').style.display = 'none';
+    mostrarLogin();
     return;
   }
 
@@ -70,13 +76,9 @@ async function iniciarSesion() {
   mostrarPanelPorRol(usuarioActual.rol);
 }
 
-function cerrarSesion() {
-  usuarioActual = null;
-  sessionStorage.removeItem("usuario");
-  location.reload();
-}
-
-// Cargar empleados para admin
+// ==============================
+// ADMIN - EMPLEADOS
+// ==============================
 async function cargarEmpleados() {
   try {
     const res = await fetch("/api/usuarios");
@@ -95,7 +97,6 @@ async function cargarEmpleados() {
   }
 }
 
-// Crear empleado
 async function crearEmpleado() {
   const nombre = document.getElementById("nombreEmpleado").value.trim();
   const usuario = document.getElementById("usuarioEmpleado").value.trim();
@@ -121,7 +122,9 @@ async function crearEmpleado() {
   }
 }
 
-//  películas
+// ==============================
+// PELÍCULAS
+// ==============================
 async function cargarPeliculas() {
   try {
     const res = await fetch("/api/peliculas");
@@ -148,6 +151,7 @@ async function cargarPeliculasParaCaseta() {
 
     const res = await fetch("/api/peliculas");
     const data = await res.json();
+
     data.forEach(p => {
       const opt = document.createElement("option");
       opt.value = p.titulo;
@@ -161,8 +165,9 @@ async function cargarPeliculasParaCaseta() {
   }
 }
 
-
-// Generar asientos con ocupado
+// ==============================
+// ASIENTOS PARA USUARIO NORMAL
+// ==============================
 async function generarAsientos() {
   const cont = document.getElementById("asientosContainer");
   cont.innerHTML = "";
@@ -171,7 +176,6 @@ async function generarAsientos() {
   const sala = document.getElementById("salaSelecion").value;
   if (!sala) return;
 
-  // 1. Obtener ventas y marcar ocupados
   const res = await fetch("/api/ventas");
   const ventas = await res.json();
   const ocupados = [];
@@ -185,6 +189,7 @@ async function generarAsientos() {
 
   const filas = ["A", "B", "C", "D"];
   let contador = 0;
+
   for (let fila of filas) {
     for (let i = 1; i <= 5; i++) {
       const id = `${fila}${i}`;
@@ -221,7 +226,9 @@ function toggleSeleccionAsiento(div) {
   }
 }
 
-// Comprar boletos
+// ==============================
+// COMPRA DE BOLETOS (USUARIO)
+// ==============================
 async function comprar() {
   const reservados = document.querySelectorAll(".asiento.seleccionado");
   const sala = document.getElementById("salaSelecion").value;
@@ -258,14 +265,13 @@ async function comprar() {
     if (!data.success) return alert(data.error || "Error en la compra.");
 
     const usuarioNombre = sessionStorage.getItem("usuario")
-  ? JSON.parse(sessionStorage.getItem("usuario")).usuario
-  : "Invitado";
-let detalles = `Usuario: ${usuarioNombre}<br>`;
+      ? JSON.parse(sessionStorage.getItem("usuario")).usuario
+      : "Invitado";
+
+    let detalles = `Usuario: ${usuarioNombre}<br>`;
     reservados.forEach(a => {
       const id = a.dataset.id;
-      const fila = id.charAt(0);
-      const numero = id.slice(1);
-      detalles += `Fila ${fila}, Asiento ${numero}<br>`;
+      detalles += `Fila ${id.charAt(0)}, Asiento ${id.slice(1)}<br>`;
       a.classList.remove("seleccionado");
       a.classList.add("ocupado");
       a.onclick = null;
@@ -279,7 +285,6 @@ let detalles = `Usuario: ${usuarioNombre}<br>`;
     document.getElementById("totalPago").textContent = "Total: $" + total.toFixed(2);
     document.getElementById("ticket").style.display = "block";
 
-    // actualizar estadísticas si está visible
     if (usuarioActual?.rol === 'admin' || usuarioActual?.rol === 'empleado') {
       cargarEstadisticas();
     }
@@ -288,70 +293,15 @@ let detalles = `Usuario: ${usuarioNombre}<br>`;
     alert("Error de servidor");
   }
 }
- // estadisticas de empleado
-async function cargarEstadisticas() {
-  try {
-    const res = await fetch('/api/ventas');
-    const ventas = await res.json();
-    if (!Array.isArray(ventas)) return;
 
-    const estadisticas = {
-      totalVentas: 0,
-      clientes: new Set(),
-      conMembresia: 0,
-      sinMembresia: 0,
-      porPelicula: {},
-      porSala: {},
-    };
-
-    ventas.forEach(v => {
-      estadisticas.totalVentas += v.total;
-      if (v.usuario_id) estadisticas.clientes.add(v.usuario_id);
-
-      const conMembresia = Number(v.membresia) === 1;
-if (conMembresia) estadisticas.conMembresia++;
-else estadisticas.sinMembresia++;
-
-      estadisticas.porPelicula[v.pelicula] = (estadisticas.porPelicula[v.pelicula] || 0) + v.asientos.split(',').length;
-      estadisticas.porSala[v.sala] = (estadisticas.porSala[v.sala] || 0) + v.asientos.split(',').length;
-    });
-
-    const peliculaMasVendida = Object.entries(estadisticas.porPelicula).reduce((a, b) => a[1] > b[1] ? a : b, ["", 0]);
-    const peliculaMenosVendida = Object.entries(estadisticas.porPelicula).reduce((a, b) => a[1] < b[1] ? a : b, ["", Infinity]);
-
-    const contenedor = document.getElementById('ventasContainer');
-    contenedor.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card"><h4>Total Ventas</h4><p>$${estadisticas.totalVentas.toFixed(2)}</p></div>
-        <div class="stat-card"><h4>Clientes Atendidos</h4><p>${estadisticas.clientes.size}</p></div>
-        <div class="stat-card"><h4>Ventas con Membresía</h4><p>${estadisticas.conMembresia}</p></div>
-        <div class="stat-card"><h4>Ventas sin Membresía</h4><p>${estadisticas.sinMembresia}</p></div>
-        <div class="stat-card"><h4>Película más vendida</h4><p>${peliculaMasVendida[0]}</p></div>
-        <div class="stat-card"><h4>Película menos vendida</h4><p>${peliculaMenosVendida[0]}</p></div>
-      </div>
-
-      <h3>Boletos vendidos por película:</h3>
-      <ul>
-        ${Object.entries(estadisticas.porPelicula).map(([titulo, cant]) => `<li>${titulo}: ${cant}</li>`).join('')}
-      </ul>
-
-      <h3>Boletos vendidos por sala:</h3>
-      <ul>
-        ${Object.entries(estadisticas.porSala).map(([sala, cant]) => `<li>Sala ${sala}: ${cant}</li>`).join('')}
-      </ul>
-    `;
-  } catch (err) {
-    console.error('Error cargando estadísticas:', err);
-  }
-}
-
-
-//  boleto
+// ==============================
+// VENTA DESDE CASETA (EMPLEADO)
+// ==============================
 async function venderDesdeCaseta() {
   const pelicula = document.getElementById("peliculaCaseta").value;
   const nombreCliente = document.getElementById("nombreClienteCaseta").value.trim();
   const fecha = new Date().toISOString();
-  const sala = 1; // Sala fija o definida internamente
+  const sala = 1;
   const precioBase = 75;
   const asientos = asientosSeleccionados;
 
@@ -395,9 +345,8 @@ async function venderDesdeCaseta() {
 
       alert("Venta registrada correctamente.");
 
-      if (usuarioActual?.rol === 'admin' || usuarioActual?.rol === 'empleado') {
-        cargarEstadisticas();
-      }
+      // Forzar actualización de estadísticas visuales
+      cargarEstadisticas();
 
       generarAsientosCaseta();
     } else {
@@ -409,7 +358,9 @@ async function venderDesdeCaseta() {
   }
 }
 
-//asientos pero para caseta
+// ==============================
+// GENERAR ASIENTOS PARA CASETA
+// ==============================
 function generarAsientosCaseta() {
   const contenedor = document.getElementById("asientosCasetaContainer");
   contenedor.innerHTML = "";
@@ -471,4 +422,60 @@ function generarAsientosCaseta() {
       console.error("Error generando asientos para caseta:", err);
       contenedor.innerHTML = "<p>Error al cargar asientos.</p>";
     });
+}
+
+// ==============================
+// ESTADÍSTICAS
+// ==============================
+async function cargarEstadisticas() {
+  try {
+    const res = await fetch('/api/ventas');
+    const ventas = await res.json();
+    if (!Array.isArray(ventas)) return;
+
+    const estadisticas = {
+      totalVentas: 0,
+      clientes: new Set(),
+      conMembresia: 0,
+      sinMembresia: 0,
+      porPelicula: {},
+      porSala: {},
+    };
+
+    ventas.forEach(v => {
+      estadisticas.totalVentas += v.total;
+      // Consideramos cliente atendido como cada venta hecha, sin repetir usuario_id
+      estadisticas.clientes.add(v.id); // cambiar por v.id en lugar de usuario_id para contar ventas individuales
+
+      const conMembresia = Number(v.membresia) === 1;
+      if (conMembresia) estadisticas.conMembresia++;
+      else estadisticas.sinMembresia++;
+
+      const cantidadBoletos = v.asientos.split(',').filter(Boolean).length;
+      estadisticas.porPelicula[v.pelicula] = (estadisticas.porPelicula[v.pelicula] || 0) + cantidadBoletos;
+
+      
+    });
+
+    const peliculaMasVendida = Object.entries(estadisticas.porPelicula).reduce((a, b) => a[1] > b[1] ? a : b, ["", 0]);
+    const peliculaMenosVendida = Object.entries(estadisticas.porPelicula).reduce((a, b) => a[1] < b[1] ? a : b, ["", Infinity]);
+
+    const contenedor = document.getElementById('ventasContainer');
+    contenedor.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><h4>Total Ventas</h4><p>$${estadisticas.totalVentas.toFixed(2)}</p></div>
+        <div class="stat-card"><h4>Clientes Atendidos</h4><p>${estadisticas.clientes.size}</p></div>
+        <div class="stat-card"><h4>Ventas con Membresía</h4><p>${estadisticas.conMembresia}</p></div>
+        <div class="stat-card"><h4>Ventas sin Membresía</h4><p>${estadisticas.sinMembresia}</p></div>
+        <div class="stat-card"><h4>Película más vendida</h4><p>${peliculaMasVendida[0]}</p></div>
+        <div class="stat-card"><h4>Película menos vendida</h4><p>${peliculaMenosVendida[0]}</p></div>
+      </div>
+
+      <h3>Boletos vendidos por película:</h3>
+      <ul>${Object.entries(estadisticas.porPelicula).map(([titulo, cant]) => `<li>${titulo}: ${cant}</li>`).join('')}</ul>
+
+    `;
+  } catch (err) {
+    console.error('Error cargando estadísticas:', err);
+  }
 }
