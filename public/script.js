@@ -221,12 +221,14 @@ function toggleSeleccionAsiento(div) {
   }
 }
 
+let ticketData = {}; // variable global para guardar info del ticket
+
 // Comprar boletos
 async function comprar() {
   const reservados = document.querySelectorAll(".asiento.seleccionado");
   const sala = document.getElementById("salaSelecion").value;
   const pelicula = peliculas[0]?.titulo || "Película desconocida";
-  const fecha = new Date().toISOString();
+  const fecha = new Date();
 
   if (!sala || reservados.length === 0) {
     return alert("Selecciona una sala y al menos un asiento.");
@@ -237,6 +239,9 @@ async function comprar() {
   const precioBase = 75;
   const total = reservados.length * precioBase * (1 - descuento);
   const asientos = Array.from(reservados).map(div => div.dataset.id);
+  const usuarioNombre = sessionStorage.getItem("usuario")
+    ? JSON.parse(sessionStorage.getItem("usuario")).usuario
+    : "Invitado";
   const usuario_id = usuarioActual ? usuarioActual.id : null;
 
   try {
@@ -249,7 +254,7 @@ async function comprar() {
         sala,
         asientos,
         total,
-        fecha,
+        fecha: fecha.toISOString(),
         membresia: tieneMembresia ? 1 : 0
       })
     });
@@ -257,10 +262,19 @@ async function comprar() {
     const data = await res.json();
     if (!data.success) return alert(data.error || "Error en la compra.");
 
-    const usuarioNombre = sessionStorage.getItem("usuario")
-  ? JSON.parse(sessionStorage.getItem("usuario")).usuario
-  : "Invitado";
-let detalles = `Usuario: ${usuarioNombre}<br>`;
+    // Guardamos la info en la variable global para el PDF
+    ticketData = {
+      usuarioNombre,
+      pelicula,
+      sala,
+      asientos,
+      tieneMembresia,
+      total,
+      fecha
+    };
+
+    // Crear detalles para mostrar en HTML
+    let detalles = `Usuario: ${usuarioNombre}<br>`;
     reservados.forEach(a => {
       const id = a.dataset.id;
       const fila = id.charAt(0);
@@ -288,6 +302,7 @@ let detalles = `Usuario: ${usuarioNombre}<br>`;
     alert("Error de servidor");
   }
 }
+
  // estadisticas de empleado
 async function cargarEstadisticas() {
   try {
@@ -472,3 +487,86 @@ function generarAsientosCaseta() {
       contenedor.innerHTML = "<p>Error al cargar asientos.</p>";
     });
 }
+
+
+// Generar PDF del ticket
+ async function descargarTicketPDF() {
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF({
+  orientation: "portrait",
+  unit: "mm",
+  format: [80, 150]
+});
+
+const fechaHora = new Date(ticketData.fecha).toLocaleString("es-MX");
+
+// 🌸 Encabezado rosita
+doc.setFillColor(255, 192, 203);
+doc.rect(0, 0, 80, 15, 'F');
+doc.setTextColor(255, 255, 255);
+doc.setFont("helvetica", "bold");
+doc.setFontSize(14);
+doc.text("CinePlus", 40, 10, { align: "center" });
+
+// 📄 Datos del ticket
+let y = 25;  // empezamos un poco más abajo que antes
+
+doc.setTextColor(0, 0, 0);
+doc.setFontSize(9);
+doc.setFont("courier", "normal");
+
+doc.text(`Usuario: ${ticketData.usuario}`, 5, y); y += 8;
+doc.text(`Película: ${ticketData.pelicula}`, 5, y); y += 8;
+doc.text(`Sala: ${ticketData.sala}`, 5, y); y += 8;
+doc.text(`Asientos: ${ticketData.asientos.join(', ')}`, 5, y); y += 8;
+doc.text(`Fecha: ${fechaHora}`, 5, y); y += 10;
+
+doc.setDrawColor(200);
+doc.line(5, y, 75, y);
+y += 12;
+
+// Total
+doc.setFont("helvetica", "bold");
+doc.setFontSize(11);
+doc.text(`Total: $${ticketData.total.toFixed(2)}`, 5, y);
+y += 12;
+
+if (ticketData.tieneMembresia) {
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(200, 50, 100);
+  const descuentoTexto = "Se aplicó un 15% de descuento por membresía.";
+  const maxWidth = 70;
+  const lines = doc.splitTextToSize(descuentoTexto, maxWidth);
+  doc.text(lines, 5, y);
+  y += lines.length * 7;
+  doc.setTextColor(0, 0, 0);
+  y += 8;
+}
+
+// ❤️ Gracias
+doc.line(5, y, 75, y);
+y += 12;
+doc.setFontSize(10);
+doc.setFont("helvetica", "italic");
+doc.text("¡Gracias por su compra!", 40, y, { align: "center" });
+
+function dibujarQRFake(doc, x, y, size) {
+  const rows = 21;
+  const cols = 21;
+  const cellSize = size / rows;
+
+  doc.setFillColor(0, 0, 0);
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      if (Math.random() < 0.4) {
+        doc.rect(x + col * cellSize, y + row * cellSize, cellSize, cellSize, 'F');
+      }
+    }
+  }
+}
+
+dibujarQRFake(doc, 50, y + 2, 25);
+
+doc.save("ticket_cineplus.pdf");
+  }
