@@ -506,7 +506,7 @@ doc.rect(0, 0, 80, 15, 'F');
 doc.setTextColor(255, 255, 255);
 doc.setFont("helvetica", "bold");
 doc.setFontSize(14);
-doc.text("CinePlus", 40, 10, { align: "center" });
+doc.text("Ticket de compra", 40, 10, { align: "center" });
 
 // 📄 Datos del ticket
 let y = 25;  // empezamos un poco más abajo que antes
@@ -568,5 +568,5 @@ function dibujarQRFake(doc, x, y, size) {
 
 dibujarQRFake(doc, 50, y + 2, 25);
 
-doc.save("ticket_cineplus.pdf");
+doc.save("ticket.pdf");
   }
