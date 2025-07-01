@@ -231,9 +231,10 @@ body #login input::placeholder {
     display: none;
     background: #fff;
     border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(60, 50, 107, 0.13);
+    box-shadow: 0 6px 20px rgba(201, 54, 98, 0.13);
     padding: 32px 28px 28px 28px;
     max-width: 900px;
+
     margin: 40px auto 0 auto;
     position: relative;
     z-index: 2;
@@ -440,4 +441,26 @@ body #login input::placeholder {
 
 .btn-peligro:hover {
     background-color: #c0392b;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #f17272;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    color: #445b75;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    gap: 20px;
 }
