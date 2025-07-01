@@ -110,8 +110,8 @@ async function cargarEmpleados() {
       </table>
     `;
   } catch (err) {
-    console.error("Error cargando empleados", err);
-  }
+    console.error("Error cargando empleados", err);
+  }
 }
 // Crear empleado
 async function crearEmpleado() {
@@ -282,7 +282,7 @@ async function comprar() {
 
     // Guardamos la info en la variable global para el PDF
     ticketData = {
-      usuarioNombre,
+       usuario: usuarioNombre,
       pelicula,
       sala,
       asientos,
@@ -292,16 +292,19 @@ async function comprar() {
     };
 
     // Crear detalles para mostrar en HTML
-    let detalles = `Usuario: ${usuarioNombre}<br>`;
-    reservados.forEach(a => {
-      const id = a.dataset.id;
-      const fila = id.charAt(0);
-      const numero = id.slice(1);
-      detalles += `Fila ${fila}, Asiento ${numero}<br>`;
-      a.classList.remove("seleccionado");
-      a.classList.add("ocupado");
-      a.onclick = null;
-    });
+   let detalles = `Usuario: ${usuarioNombre}<br>`;
+detalles += `Película: ${pelicula}<br>`;
+detalles += `Sala: ${sala}<br>`;
+reservados.forEach(a => {
+  const id = a.dataset.id;
+  const fila = id.charAt(0);
+  const numero = id.slice(1);
+  detalles += `Fila ${fila}, Asiento ${numero}<br>`;
+  a.classList.remove("seleccionado");
+  a.classList.add("ocupado");
+  a.onclick = null;
+});
+
 
     if (tieneMembresia) {
       detalles += `<br><strong>Se aplicó un 15% de descuento por membresía.</strong>`;
@@ -366,11 +369,6 @@ else estadisticas.sinMembresia++;
       <h3>Boletos vendidos por película:</h3>
       <ul>
         ${Object.entries(estadisticas.porPelicula).map(([titulo, cant]) => `<li>${titulo}: ${cant}</li>`).join('')}
-      </ul>
-
-      <h3>Boletos vendidos por sala:</h3>
-      <ul>
-        ${Object.entries(estadisticas.porSala).map(([sala, cant]) => `<li>Sala ${sala}: ${cant}</li>`).join('')}
       </ul>
     `;
   } catch (err) {
@@ -440,6 +438,16 @@ async function venderDesdeCaseta() {
     console.error("Error registrando venta:", err);
     alert("Error de servidor");
   }
+  ticketData = {
+  usuario: usuarioActual.nombre,
+  pelicula,
+  sala,
+  asientos,
+  tieneMembresia,
+  total,
+  fecha: new Date(fecha),
+};
+
 }
 
 //asientos pero para caseta

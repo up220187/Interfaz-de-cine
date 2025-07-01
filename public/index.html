@@ -16,14 +16,13 @@
   </div>
 
   <div id="salas" style="display: none;">
-    <h2>Selecciona Sala y Asientos</h2>
+    <h2>Selecciona Película y Asientos</h2>
     <select id="salaSelecion" onchange="generarAsientos()">
-      <option value="">Selecciona una sala</option>
-      <option value="1">Sala 1</option>
-      <option value="2">Sala 2</option>
-      <option value="3">Sala 3</option>
+      <option value="">Selecciona una película</option>
+      <option value="1">Rápidos y furiosos 9</option>
+      <option value="2">El conjuro 3</option>
+      <option value="3">Un jefe en pañales</option>
     </select>
-    <div id="peliculasContainer"></div>
     <div id="asientosContainer"></div>
     <button onclick="comprar()">Comprar</button>
     <div style="margin-top: 10px;">
@@ -68,7 +67,6 @@
 
     <button onclick="venderDesdeCaseta()">Registrar venta</button>
   </div>
-
   <button onclick="cerrarSesion()">Cerrar Sesión</button>
 </div>
 
