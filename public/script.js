@@ -80,21 +80,39 @@ function cerrarSesion() {
 async function cargarEmpleados() {
   try {
     const res = await fetch("/api/usuarios");
-    const lista = document.getElementById("listaEmpleados");
     const usuarios = await res.json();
 
-    lista.innerHTML = '<table><tr><th>Nombre</th><th>Usuario</th><th>Rol</th></tr>';
-    usuarios.forEach(u => {
-      if (u.rol === 'empleado' || u.rol === 'admin') {
-        lista.innerHTML += `<tr><td>${u.nombre}</td><td>${u.usuario}</td><td>${u.rol}</td></tr>`;
-      }
-    });
-    lista.innerHTML += '</table>';
+    const lista = document.getElementById("listaEmpleados");
+    lista.innerHTML = `
+      <table class="tabla-empleados">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${usuarios
+            .filter(u => u.rol !== "admin") // opcional: si quieres ocultar admin
+            .map(
+              u => `
+                <tr>
+                  <td>${u.id}</td>
+                  <td>${u.nombre}</td>
+                  <td>${u.usuario}</td>
+                  <td>${u.rol}</td>
+                </tr>
+              `
+            ).join("")}
+        </tbody>
+      </table>
+    `;
   } catch (err) {
-    console.error("Error cargando empleados", err);
-  }
+    console.error("Error cargando empleados", err);
+  }
 }
-
 // Crear empleado
 async function crearEmpleado() {
   const nombre = document.getElementById("nombreEmpleado").value.trim();
